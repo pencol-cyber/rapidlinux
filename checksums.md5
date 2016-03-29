@@ -1,0 +1,7 @@
+88028af77794026b75de1892b5e8c644  base.sh
+6637e45c37c7f6f307d11fd8006ec651  modules/core_accounts.sh
+ce546b2636fa2a62d8d7f83814836c72  modules/core_diffing.sh
+2527399116096d13f98fa49d63ef5b7d  modules/core_networking.sh
+4770226653ba6c3db96c3c88244c29fa  modules/core_sshd.sh
+38de8b9a2651ab3b7d0b4879bdf89c23  modules/core_updating.sh
+be8c1bde86a6e4f02bc7536de4ba6745  modules/hunt_sshd_keys.sh
