@@ -6,9 +6,10 @@
 #                  Do not run this on anything that is actually important to you
 #						                 bofh@pencol.edu
 #
-#m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
-#m_inform="echo -e \e[2m[\e[95m.\e[0m\e[2m]\e[0m "
-#m_choose="echo -e \e[2m[\e[96m=\e[0m\e[2m]\e[0m "
+m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
+m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
+m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
+
 declare -a ipv4_addr_array
 
   for ips in `ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -v "127.0.0.1" | grep -Eo '([0-9]*\.){3}[0-9]*'` ; do

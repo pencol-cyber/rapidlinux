@@ -7,8 +7,9 @@
 #						                 bofh@pencol.edu
 #
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
-m_inform="echo -e \e[2m[\e[95m.\e[0m\e[2m]\e[0m "
-m_choose="echo -e \e[2m[\e[96m=\e[0m\e[2m]\e[0m "
+m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
+m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
+
 
 # override the autodetection of package manager here
 # 	OS_PKG_MGR=undef
@@ -49,14 +50,14 @@ function apt_schedule_cron {
     # mine are one-time usage for 2016-04-01
     
     $m_inform"This subsection attempts to do two things:"
-    $m_inform"    1) schedule a full update to kick off at \e[33m7:08pm\e[0m on \e[33m04/01\e[0m"
-    $m_inform"    2) schedule a reboot for \e[32m3:01am\e[0m on \e[32m04/02\e[0m"
+    $m_inform"    \e[2m1\e[0m) schedule a full update to kick off at \e[33m7:08pm\e[0m on \e[33m04/01\e[0m"
+    $m_inform"    \e[2m2\e[0m) schedule a reboot for \e[32m3:01am\e[0m on \e[32m04/02\e[0m"
     echo
     $m_inform"Hopefully this gets you a hardened server, and zero effective down-time"
     echo
     $m_choose"Add scheduler now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
     read -p "> " -t 60 invoke_scheduler
-            if [[ "$invoke_scheduler" == y || "$invoke_scheduler" == Y ]] ; then
+          if [[ "$invoke_scheduler" == y || "$invoke_scheduler" == Y ]] ; then
 	    
 	    #minute/hour/day of month/month/day in week
 	    which
@@ -64,7 +65,10 @@ function apt_schedule_cron {
 	    chmod 700 $SCRIPT_HOME_INFOS/rapid-upgrade-deb.sh
 	    echo "8 19 1 4 * $SCRIPT_HOME_INFOS/rapid-upgrade-deb.sh" >> $SCRIPT_HOME_INFOS/mycronjobs.cron
 	    echo "31 3 2 4 * /sbin/reboot" >> $SCRIPT_HOME_INFOS/mycronjobs.cron
-	    crontab file $SCRIPT_HOME_INFOS/mycronjobs.cron
+	    cat $SCRIPT_HOME_INFOS/mycronjobs.cron | crontab - xargs
+	  fi
+}
+
 
 if [[ $1 == new ]] ; then
   if [[ "$OS_PKG_MGR" != undef && "$OS_PKG_MGR" != "" ]] ; then
@@ -100,13 +104,15 @@ if [[ $1 == new ]] ; then
 		exit 1
 	      
       esac
+   fi
+fi
 
 if [[ $1 != new ]] ; then
   if [[ "$OS_PKG_MGR" != undef && "$OS_PKG_MGR" != "" ]] ; then
       
        case "$OS_PKG_MGR" in
 	    apt)
-		$m_inform"Using [\e[94m$OS_PKG_MGR\e[0m] for Debian / Ubuntu based systems"
+		$m_inform"Using [\e[35m$OS_PKG_MGR\e[0m] for Debian / Ubuntu based systems"
 		case $1 in
 		      mysql)
 		      apt_do_mysql
@@ -129,30 +135,29 @@ if [[ $1 != new ]] ; then
 		      *)
 		      $m_inform"No predefined rule found for $1, trying to upgrade it anyway ..."
 		      apt-get upgrade $1		
-	      ;;
-         
+		esac
+	    ;;
+	    
 	    yum)
-		$m_inform"selected [\e[94m$OS_PKG_MGR\e[0m] for Fedora / CentOS based systems"
+		$m_inform"selected [\e[35m$OS_PKG_MGR\e[0m] for Fedora / CentOS based systems"
 		yum upgrade $1
 	      ;;
 
 	 zypper)
-		$m_inform"selected [\e[94m$OS_PKG_MGR\e[0m] for SuSE based systems"
+		$m_inform"selected [\e[35m$OS_PKG_MGR\e[0m] for SuSE based systems"
 		zypper update -t $1
 	      ;;
 
-	 something_i_never defined)
-		$m_inform"selected [\e[94m$OS_PKG_MGR\e[0m] for () based systems"
+	 something_i_never_defined)
+		$m_inform"selected [\e[35m$OS_PKG_MGR\e[0m] for () based systems"
 	      ;;
 	    
 	      *)
-		$m_issue"No logic defined for your currently set package manager [\e[94m$OS_PKG_MGR\e[0m]"
+		$m_issue"No logic defined for your currently set package manager [\e[35m$OS_PKG_MGR\e[0m]"
 		echo
 		exit 1
 	      
-      esac
+	esac
   fi
 fi
 
-
-    

@@ -21,14 +21,15 @@ export OS_NAME=undef
 export OS_PKG_MGR=undef
 # Where we at?
 export SCRIPT_HOME=`pwd`
-# Username to add & allow in SSH?
-export MY_USERNAME=bofh
-# white team account name?
-export SUPPORT_ACCOUNT=undef
 # where to store discovery items?
 export SCRIPT_HOME_INFOS=$SCRIPT_HOME/infos
 # where to store originals of files we modify?
 export SCRIPT_HOME_BACKUPS=$SCRIPT_HOME/backups
+# Username to add & allow in SSH?
+export MY_USERNAME=bofh
+# white team account name?
+export SUPPORT_ACCOUNT=undef
+
 # Do sanity checks?
 DO_SANITY_CHECK=yes
 # Do Package Manager check?
@@ -61,18 +62,17 @@ echo -e "\e[32m\e[1m  rrr \e[0m"
 echo ''
 echo ''
 
-missings_deps=0
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
-m_inform="echo -e \e[2m[\e[95m.\e[0m\e[2m]\e[0m "
-m_choose="echo -e \e[2m[\e[96m=\e[0m\e[2m]\e[0m "
+m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
+m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
 
 
 
 function sanity_check {
 
   default_shell=`readlink -f /bin/sh`
-  echo -e "\e[2m[\e[95m.\e[0m\e[2m]\e[0m Your default system shell appears to be \e[34m$default_shell\e[0m"
-  echo -e "\e[2m[\e[95m.\e[0m\e[2m]\e[0m This script is currently running under \e[34m$SHELL\e[0m"
+  echo -e "\e[2m[\e[36m.\e[0m\e[2m]\e[0m Your default system shell appears to be \e[34m$default_shell\e[0m"
+  echo -e "\e[2m[\e[36m.\e[0m\e[2m]\e[0m This script is currently running under \e[34m$SHELL\e[0m"
   
   if [[ "$default_shell" != /bin/bash && "$default_shell" != /usr/bin/bash ]] ; then
       $m_issue"\e[34m$default_shell\e[0m is not bash, this could be an issue"
@@ -92,7 +92,8 @@ clear
   fi
   
   # essential bins needed by this script and sub-modules
-  reqs="cut passwd chgpasswd iptables usermod wc tr chattr grep netstat chmod ifconfig tar diff adduser sed md5sum"
+  missings_deps=0
+  reqs="cut passwd chgpasswd iptables usermod wc tr chattr grep netstat chmod ifconfig tar diff adduser su sed md5sum"
   for req_binary in $reqs ; do
     which $req_binary &> /dev/null
       if [[ $? -eq 0 ]] ; then
@@ -127,27 +128,27 @@ if [[ -r /etc/issue ]] ; then
     $m_inform"[\e[94m/etc/issue\e[0m] exists and is readable"
     OS_NAME=`cat /etc/issue | cut -f 1 -d " " | xargs`
     OSVersion=`cat /etc/issue | cut -f 2 -d " " | xargs`
-    $m_inform"Invoking package manager determination based on found strings [\e[94m$OS_NAME\e[34m $OSVersion\e[0m]"
+    $m_inform"Invoking package manager determination based on found strings [\e[35m$OS_NAME\e[34m $OSVersion\e[0m]"
     
       case "$OS_NAME" in
 	      [Uu]buntu)
 		export OS_PKG_MGR=apt
-		$m_inform"selected [\e[94m$OS_PKG_MGR\e[0m] for Ubuntu based system"
+		$m_inform"selected [\e[35m$OS_PKG_MGR\e[0m] for Ubuntu based system"
 	      ;;
          
 	      [Ff]edora)
 		export OS_PKG_MGR=yum
-		$m_inform"selected [\e[94m$OS_PKG_MGR\e[0m] for Fedora based system"	   
+		$m_inform"selected [\e[35m$OS_PKG_MGR\e[0m] for Fedora based system"	   
 	      ;;
 
 	[Cc]ent[Oo][Ss])
 		export OS_PKG_MGR=yum
-		$m_inform"selected [\e[94m$OS_PKG_MGR\e[0m] for CentOS based system"	   
+		$m_inform"selected [\e[35m$OS_PKG_MGR\e[0m] for CentOS based system"	   
 	      ;;
 
 	      [Dd]ebian)
 		export OS_PKG_MGR=apt
-		$m_inform"selected [\e[94m$OS_PKG_MGR\e[0m] for Debian based system"	    
+		$m_inform"selected [\e[35m$OS_PKG_MGR\e[0m] for Debian based system"	    
 	      ;;
 	    
 		      *)
@@ -203,6 +204,12 @@ fi
     mkdir $SCRIPT_HOME_INFOS
   fi
 
+  if [[ -d "$SCRIPT_HOME_BACKUPS" ]] ; then
+    sleep 1
+  else
+    mkdir $SCRIPT_HOME_BACKUPS
+  fi
+  
   if [[ -z "$MY_USERNAME" && "$MY_USERNAME" != undef ]] ; then
     if [[ -r "$SCRIPT_HOME_INFOS/my_username.txt" ]] ; then
       sleep 1
@@ -215,6 +222,7 @@ fi
 #
 #
   if [[ "$DO_ACCT_MGMT" == yes ]] ; then
+    # script anticipates: $1r [new|modify]  $2o [skip_create]
     $m_choose"Should we do some account management now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
     read -p "> " -t 60 invoke_usermod
       if [[ "$invoke_usermod" == y || "$invoke_usermod" == Y ]] ; then
@@ -224,6 +232,7 @@ fi
     fi
 
   if [[ "$DO_BACKUPS" == yes ]] ; then
+    # script anticipates: $1r [new| 'name of location to backup ]
     $m_choose"Should we backup existing files now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
     read -p "> " -t 60 invoke_backups
       if [[ "$invoke_backups" == y || "$invoke_backups" == Y ]] ; then
@@ -244,6 +253,7 @@ fi
     fi
 
   if [[ "$DO_UPDATES" == yes ]] ; then
+    # script anticipates: $1o [new| or 'name of package to update']
     $m_choose"Should we do some updates and patching now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
     read -p "> " -t 60 invoke_updates
       if [[ "$invoke_updates" == y || "$invoke_updates" == Y ]] ; then
@@ -257,7 +267,9 @@ fi
     read -p "> " -t 60 invoke_sshd
       if [[ "$invoke_sshd" == y || "$invoke_sshd" == Y ]] ; then
 	echo
+	# no params
 	$SCRIPT_HOME/modules/core_sshd.sh
+	# no params
 	$SCRIPT_HOME/modules/hunt_sshd_keys.sh
       fi
     fi
@@ -273,6 +285,8 @@ fi
     fi
         
    if [[ "$DO_HASHING" == yes ]] ; then
+    # script aticipates: 3-4 params, descibed below
+    
     $m_choose"Should we setup a base for file intergrity monitoring now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
     read -p "> " -t 60 invoke_diffing
       if [[ "$invoke_diffing" == y || "$invoke_diffing" == Y ]] ; then
@@ -287,3 +301,6 @@ fi
 	$SCRIPT_HOME/modules/core_diffing.sh new /root root
       fi
     fi
+    
+    echo
+    $m_inform" .. rapidlinux has completed it's run!"

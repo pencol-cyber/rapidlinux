@@ -12,13 +12,13 @@
 
 dont_descend=false
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
-m_inform="echo -e \e[2m[\e[95m.\e[0m\e[2m]\e[0m "
-m_choose="echo -e \e[2m[\e[96m=\e[0m\e[2m]\e[0m "
+m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
+m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
 
-if [[ $SCRIPT_HOME == "" || $SCRIPT_HOME == undef ]] ; then
+if [[ $SCRIPT_HOME_BACKUPS == "" || $SCRIPT_HOME_BACKUPS == undef ]] ; then
   backup_dir=/root/backups
   else
-  backup_dir=$SCRIPT_HOME/backups
+  backup_dir=$SCRIPT_HOME_BACKUPS
 fi
 
 if [[ -r $backup_dir/db.txt ]] ; then
@@ -43,7 +43,7 @@ fi
 param1=$1
 # assign input '/example/dir'
 param2=$2
-# assign input cannoical name 'example'
+# assign input cannocal name 'example'
 param3=$3
 # optional param4 - no_descend
 if [[ "$4" == "no_descend" ]] ; then
@@ -51,18 +51,23 @@ if [[ "$4" == "no_descend" ]] ; then
 fi
 
 function do_new_hashing() {
-# This is quite possibly the most in-elegant function you've ever seen
-# I looked for the opposing force to `basename` but couldn't find it
 
-if [[ "$#" -ne 2 ]] ; then
-  echo "An error occurred: not enough parameters supplied"
-fi
+    # This is quite possibly the most in-elegant function you've ever seen
+    # I looked for the opposing force to `basename` but couldn't find it
+    # ... interates making long timestamp + filesize combos for quick & dirty
+    # change detection
+    # [requires params] $1r filesystem, $2r name
+    # if param4 is passed, only operates on base directory and contents
 
-section_root=$1
-backup_short=$2
+  if [[ "$#" -ne 2 ]] ; then
+    echo "An error occurred: not enough parameters supplied"
+  fi
 
-ls -lad --full-time $section_root/* > $backup_dir/$backup_short/diffing_orig.txt
-$m_inform"Creating diff for source ... \e[2m$section_root/\e[0m"
+  section_root=$1
+  backup_short=$2
+
+  ls -lad --full-time $section_root/* > $backup_dir/$backup_short/diffing_orig.txt
+  $m_inform"Creating diff for source ... \e[2m$section_root/\e[0m"
 
   if [[ $dont_descend == false ]] ; then
 	
@@ -105,52 +110,55 @@ $m_inform"Creating diff for source ... \e[2m$section_root/\e[0m"
   if [[ $dont_descend == true ]] ; then
     extra="\e[2m-no_subdirs\e[0m"
   fi
-  echo -e "\e[2m`date`:\e[0m added \e[94m`printf %14s $section_root`\e[0m described by \e[32m$backup_short\e[0m $extra" >> $backup_dir/db.txt
+  echo -e "\e[2m`date`:\e[0m added \e[35m`printf %14s $section_root`\e[0m described by \e[32m$backup_short\e[0m $extra" >> $backup_dir/db.txt
+  
 }
 
+
 function gen_hash_diff() {
-# This is quite possibly the most in-elegant function you've ever seen
-# I looked for the opposing force to `basename` but couldn't find it
 
-if [[ "$#" -ne 2 ]] ; then
-  echo "An error occurred: not enough parameters supplied"
-fi
+    # Compares previously made hashes
+    # [requires params] $1r filesystem, $2r name
+    
+  if [[ "$#" -ne 2 ]] ; then
+    echo "An error occurred: not enough parameters supplied"
+  fi
 
-section_root=$1
-tmpfile=$2
+  section_root=$1
+  tmpfile=$2
 
-ls -lad --full-time $section_root/* > $tmpfile
+  ls -lad --full-time $section_root/* > $tmpfile
 
- if [[ $dont_descend == false ]] ; then
+  if [[ $dont_descend == false ]] ; then
   
-  for dirs in `ls -ad $section_root/*` ; do
-    if [ -d $dirs ] ; then
-	ls -lad --full-time $dirs/* >> $tmpfile
-	  for sub_dirs in `ls -ad $dirs/*` ; do
-	    if [ -d $sub_dirs ] ; then
-	      ls -lad --full-time $sub_dirs/* >> $tmpfile
-		for nested_dirs in `ls -ad $sub_dirs/*` ; do
-	    	    if [ -d $nested_dirs ] ; then
-		      ls -lad --full-time $nested_dirs/* >> $tmpfile
-			for fourth_dirs in `ls -ad $nested_dirs/*` ; do
-			  if [ -d $fourth_dirs ] ; then
-			    ls -lad --full-time $fourth_dirs/* >> $tmpfile
-			      for fifth_dirs in `ls -ad $fourth_dirs/*` ; do
-				if [ -d $fifth_dirs ] ; then
-				  ls -lad --full-time $fifth_dirs/* >> $tmpfile
-				fi
-			      done
-			  fi
+    for dirs in `ls -ad $section_root/*` ; do
+      if [ -d $dirs ] ; then
+	  ls -lad --full-time $dirs/* >> $tmpfile
+	    for sub_dirs in `ls -ad $dirs/*` ; do
+	      if [ -d $sub_dirs ] ; then
+		ls -lad --full-time $sub_dirs/* >> $tmpfile
+		  for nested_dirs in `ls -ad $sub_dirs/*` ; do
+		      if [ -d $nested_dirs ] ; then
+			ls -lad --full-time $nested_dirs/* >> $tmpfile
+			  for fourth_dirs in `ls -ad $nested_dirs/*` ; do
+			    if [ -d $fourth_dirs ] ; then
+			      ls -lad --full-time $fourth_dirs/* >> $tmpfile
+				for fifth_dirs in `ls -ad $fourth_dirs/*` ; do
+				  if [ -d $fifth_dirs ] ; then
+				    ls -lad --full-time $fifth_dirs/* >> $tmpfile
+				  fi
+				done
+			    fi
 			done
-		    fi
-		done
-	    fi
+		      fi
+		  done
+	      fi
 	  done
-    fi
-  done
+      fi
+    done
   
- else
-  $m_inform"Not descending into subdirs for \e[2m$section_root/\e[0m"
+  else
+    $m_inform"Not descending into subdirs for \e[2m$section_root/\e[0m"
  fi
 }
 
@@ -173,6 +181,8 @@ newdir=$1
       fi
 }
 
+### Inoked as 'new' - make the orig diffs
+
 if [[ "$param1" = new ]] ; then
     $m_inform"Now operating with logic for \e[33m$1\e[0m on filesytem \e[2m$2\e[0m described by \e[32m`basename $backup_dir/$3`\e[0m \e[2m$4\e[0m"
     echo
@@ -181,12 +191,14 @@ if [[ "$param1" = new ]] ; then
     do_new_hashing $param2 $param3
 fi
 
+### Invoked as 'compare' recheck, and compare
+
 if [[ "$param1" = compare ]] ; then
     $m_inform"Now operating with logic for \e[34m$1\e[0m on filesytem \e[2m$2\e[0m described by \e[32m`basename $backup_dir/$3`\e[0m \e[2m$4\e[0m"
     echo
     sleep 2
     comptime=`date +%b_%d_%A_%H%M`
-    compare_file=/tmp/rapidlinux."$param3"."$comptime".txt
+    compare_file=/tmp/rapidlinux.diff."$param3"."$comptime".txt
     gen_hash_diff $param2 $compare_file
     diff $backup_dir/$param3/diffing_orig.txt $compare_file &> /dev/null
     if [[ $? -eq 0 ]] ; then

@@ -7,8 +7,8 @@
 #						                 bofh@pencol.edu
 #
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
-m_inform="echo -e \e[2m[\e[95m.\e[0m\e[2m]\e[0m "
-m_choose="echo -e \e[2m[\e[96m=\e[0m\e[2m]\e[0m "
+m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
+m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
 
 confirm_single=false
 sshd_conf=/etc/ssh/sshd_config
@@ -31,7 +31,7 @@ function define_allow_users {
 
 function confirm_single_allow {
 
-	# Confirm rollover to single 'AllowUsers' entry of $MY_USERNAME is sshd_config
+	# Confirm rollover to single 'AllowUsers' entry of $MY_USERNAME in sshd_config
 	
          if [[ "$MY_USERNAME" != "" && "$MY_USERNAME" != "undef" ]] ; then
           $m_issue"Possibly unsafe modification confirmation:"
@@ -47,8 +47,8 @@ function confirm_single_allow {
 
 function confirm_changes {
 
-  # Backup the original, just in case
-  # force manual config review
+  # only called if something has changed, at the close of fix_insecure_settings
+  # Backup the original, just in case, force manual config review
   # confirm -> cp -f -> restart sshd
   
   tmp_ssh_conf=$1
@@ -82,13 +82,14 @@ function confirm_changes {
   $m_choose"Proceed?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
     read -p "> " -t 60 do_it
       if [[ "$do_it" == y || "$do_it" == Y ]] ; then
-      cp -f $1 /etc/ssh/sshd_config
+      cp -f $1 $sshd_conf
       sleep 1
       which service &> /dev/null
 	  if [[ $0 -eq 0 ]] ; then
 	      service sshd restart
 	  else
 	    /etc/rc.d/rc.sshd restart
+	    sleep 5
 	    /etc/init.d/ssh restart
 	  fi
 	$m_inform"Service restarted with new .config, this module has completed"
@@ -108,13 +109,13 @@ function fix_insecure_settings {
   ext=`date +%b_%d_%A_%H%M`
   tmp_ssh_conf=/tmp/rapidsshd.$ext.config
 
-  if [ -r $sshd_conf ] ; then
+  if [[ -r $sshd_conf ]] ; then
       cp $sshd_conf $tmp_ssh_conf
       
       
 	$m_inform"Checking for \e[2mSSH v1 protocol\e[0m usage"
 	cat $tmp_ssh_conf | grep -e "^Protocol " | grep 1
-	if [[ "$?" == 0 ] ; then
+	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^Protocol .*/Protocol 2/' $tmp_ssh_conf
 	   sshd_modified=true
 	   $m_inform"SSH rule for \e[31mProtocol\e[0m was modified"
@@ -125,7 +126,7 @@ function fix_insecure_settings {
 	
 	$m_inform"Checking for '\e[2mEmpty Passwords\e[0m' usage"
 	cat $tmp_ssh_conf | grep -e "^PermitEmptyPasswords " | grep "yes"
-	if [[ "$?" == 0 ] ; then
+	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^PermitEmptyPasswords .*/PermitEmptyPasswords no/' $tmp_ssh_conf
 	   sshd_modified=true
 	   $m_inform"SSH rule for \e[31mPermitEmptyPasswords\e[0m was modified"
@@ -136,7 +137,7 @@ function fix_insecure_settings {
 		
 	$m_inform"Checking for '\e[2mGlobal Keyfiles\e[0m' usage"
 	cat $tmp_ssh_conf | grep -e "^AuthorizedKeysFile"
-	if [[ "$?" == 0 ] ; then
+	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^AuthorizedKeysFile .*//' $tmp_ssh_conf
 	   sshd_modified=true
 	   $m_inform"SSH rule for \e[31mAuthorizedKeysFile\e[0m was modified"
@@ -147,7 +148,7 @@ function fix_insecure_settings {
 	
 	$m_inform"Checking for '\e[2mRemote hosts\e[0m' usage"
 	cat $tmp_ssh_conf | grep -e "^IgnoreRhosts " | grep "no"
-	if [[ "$?" == 0 ] ; then
+	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^IgnoreRhosts .*/IgnoreRhosts yes/' $tmp_ssh_conf
 	   sshd_modified=true
 	   $m_inform"SSH rule for \e[31mIgnoreRhosts\e[0m was modified"
@@ -158,7 +159,7 @@ function fix_insecure_settings {
 	
 	$m_inform"Checking for '\e[2mRemote hosts RSA\e[0m' usage"
 	cat $tmp_ssh_conf | grep -e "^RhostsRSAAuthentication " | grep "yes"
-	if [[ "$?" == 0 ] ; then
+	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^RhostsRSAAuthentication .*/RhostsRSAAuthentication no/' $tmp_ssh_conf
 	   sshd_modified=true
 	   $m_inform"SSH rule for \e[31mRhostsRSAAuthentication\e[0m was modified"
@@ -169,7 +170,7 @@ function fix_insecure_settings {
 	
 	$m_inform"Checking for '\e[2mX11 Forwarding\e[0m' usage"
 	cat $tmp_ssh_conf | grep -e "^X11Forwarding " | grep "yes"
-	if [[ "$?" == 0 ] ; then
+	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^X11Forwarding .*/X11Forwarding no/' $tmp_ssh_conf
 	   sshd_modified=true
 	   $m_inform"SSH rule for \e[31mX11Forwarding\e[0m was modified"
@@ -180,7 +181,7 @@ function fix_insecure_settings {
 	
 	$m_inform"Checking for '\e[2mPermit Root Login\e[0m' usage"
 	cat $tmp_ssh_conf | grep -e "^PermitRootLogin " | grep "yes"
-	if [[ "$?" == 0 ] ; then
+	if [[ "$?" == 0 ]] ; then
 	   echo
 	   $m_inform"Disabling the ability of 'root' to login directly to SSHd is advised"
 	   $m_inform"But may break things if you do not have an alternative account to use" 
@@ -200,7 +201,7 @@ function fix_insecure_settings {
 
 	
 	$m_inform"Checking for '\e[2mSingle user SSH\e[0m' preference"	  
-	if [[ "$confirm_single" == true ] ; then
+	if [[ "$confirm_single" == true ]] ; then
 	   echo
 	   $m_inform"If you enable this rule, \e[32m$MY_USERNAME\e[0m will be the only user who can ssh in"
 	   echo

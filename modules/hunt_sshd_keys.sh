@@ -7,10 +7,9 @@
 #						                 bofh@pencol.edu
 #
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
-m_inform="echo -e \e[2m[\e[95m.\e[0m\e[2m]\e[0m "
-m_choose="echo -e \e[2m[\e[96m=\e[0m\e[2m]\e[0m "
+m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
+m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
 
-violations=0
 
 function purge_ssh_key {
     # ... it's the only way to be sure
@@ -54,7 +53,7 @@ function find_keys {
       # usage should be obvious
       
 mode=$1
-
+violations=0
 users=`cat /etc/passwd | cut -f 1 -d ":"`
 
     for user in $users ; do
@@ -113,11 +112,11 @@ users=`cat /etc/passwd | cut -f 1 -d ":"`
 	fi
 	
 	 cat /etc/ssh/sshd_config | grep -e "^AuthorizedKeysFile"
-	  if [[ "$?" == 0 ] ; then
+	  if [[ "$?" -eq 0 ]] ; then
 	    $m_issue"Someone has added \e[31m`cat /etc/ssh/sshd_config | grep -e "^AuthorizedKeysFile"`\e[0m to /etc/ssh/sshd_config, you should also look into that."
 	  fi
 	  
-	if [[ $ssh_key_action != b && $ssh_key_action != d ]] ; then
+	if [[ "$ssh_key_action" != b && "$ssh_key_action" != d ]] ; then
 	   $m_inform" Bye! "
 	fi
 	
