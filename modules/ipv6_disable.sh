@@ -46,10 +46,17 @@ function turnoff_ipv6 {
 	    $m_inform"Setting default forward IPv6 policy to DROP .."
 	    $ipt6 -P FORWARD DROP
 	    $m_inform"Disabling IPv6 routing .."
-	    $ipt6 -t nat -P INPUT DROP
-	    $ipt6 -t nat -P OUTPUT DROP
-	    $ipt6 -t nat -P PREROUTING DROP
-	    $ipt6 -t nat -P POSTROUTING DROP  
+	    
+	    $ipt6 -t nat &> /dev/null
+	    if [[ $? -eq 0 ]] ; then
+	      $ipt6 -t nat -P INPUT DROP
+	      $ipt6 -t nat -P OUTPUT DROP
+	      $ipt6 -t nat -P PREROUTING DROP
+	      $ipt6 -t nat -P POSTROUTING DROP
+	      $m_inform"IPv6 NAT disabled"
+	    else
+	      $m_inform"NAT module for ipv6 not loaded, we can skip this"
+	    fi
 	    echo
 	    sleep 2
 	  else

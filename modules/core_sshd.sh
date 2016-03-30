@@ -86,8 +86,8 @@ function confirm_changes {
       cp -f $1 $sshd_conf
       sleep 1
       which service &> /dev/null
-	  if [[ $0 -eq 0 ]] ; then
-	      service sshd restart
+	  if [[ $? -eq 0 ]] ; then
+	      service ssh restart
 	  else
 	    /etc/rc.d/rc.sshd restart
 	    sleep 5
@@ -148,7 +148,7 @@ function fix_insecure_settings {
 	
 	
 	$m_inform"Checking for '\e[2mRemote hosts\e[0m' usage"
-	cat $tmp_ssh_conf | grep -e "^IgnoreRhosts " | grep "no"
+	cat $tmp_ssh_conf | grep -e "^IgnoreRhosts " | grep "\ no"
 	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^IgnoreRhosts .*/IgnoreRhosts yes/' $tmp_ssh_conf
 	   sshd_modified=true
@@ -222,14 +222,15 @@ function fix_insecure_settings {
 	   $m_inform"Nothing to do for \e[2mSingle User Restricted\e[0m Login, finished generating sshd config"
 	fi
 
-	
-  echo
+    echo
   if [[ $sshd_modified == true ]] ; then
     confirm_changes $tmp_ssh_conf
   else
     $m_inform"No changes to your \e[34m$sshd_conf\e[0m file are required, exiting"
   fi
-  
+
+fi # from alllll the way at the top
+
 }
 
   define_allow_users

@@ -178,7 +178,7 @@ function user_finder {
 	else
 		# !6y$blah... is format for valid pass, but locked out, skip these too.
 		
-		echo "$userhash" | grep -e '^[!]'
+		echo "$userhash" | grep -e '^[!]' &> /dev/null
 		if [[ $? -eq 0 ]] ; then
 		  $m_inform"not processing \e[2m`printf %16s $user`\e[0m , who is currently locked out by: \e[2m`echo $userhash | cut -c 1`\e[0m"
 		else
@@ -295,12 +295,13 @@ function update_support_pass {
 		    exit 1
 		fi
 		
-		$m_inform" .. changing password for user e[32m$SUPPORT_ACCOUNT\e[0m"
+		$m_inform" .. changing password for user \e[32m$SUPPORT_ACCOUNT\e[0m"
 		echo $SUPPORT_ACCOUNT:$confirm_sup_pass | chpasswd xargs
 		   if [[ $? -eq 0 ]] ; then
 		      $m_inform"returned status code \e[34mSuccess\e[0m"
 		      echo
 		      $m_inform"Remember to convey this password change to the scoring engine"
+		      echo
 		   else
 		      $m_issue"pipeline returned a failure code \e[31mNot Success\e[0m"
 		   fi
