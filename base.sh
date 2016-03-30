@@ -210,7 +210,7 @@ fi
     mkdir $SCRIPT_HOME_BACKUPS
   fi
   
-  if [[ -z "$MY_USERNAME" && "$MY_USERNAME" != undef ]] ; then
+  if [[ -n "$MY_USERNAME" && "$MY_USERNAME" != undef ]] ; then
     if [[ -r "$SCRIPT_HOME_INFOS/my_username.txt" ]] ; then
       sleep 1
     else
@@ -269,7 +269,9 @@ fi
     read -p "> " -t 60 invoke_firewall
       if [[ "$invoke_firewall" == y || "$invoke_firewall" == Y ]] ; then
 	echo
-	$SCRIPT_HOME/modules/core_networking.sh firewall new
+	$SCRIPT_HOME/modules/core_networking.sh new
+	$SCRIPT_HOME/modules/firewall_cron.sh
+	$SCRIPT_HOME/modules/ipv6_disable.sh
       fi
     fi
 
