@@ -12,6 +12,7 @@
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
 m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
 m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
+$m_inform"Now using rapid module: [\e[32mCore Backups\e[0m]"
 
   if [[ -d "$SCRIPT_HOME_BACKUPS" ]] ; then
     sleep 1
@@ -67,39 +68,20 @@ function process_args {
 if [[ "$1" == new ]] ; then
   # new, back it all up
   
-  process_args /etc/shadow
-  process_args /etc/group
-  process_args /etc/passwd
-  if [[ -f /etc/sudoers ]] ; then
-    process_args /etc/sudoers
-  fi
-  if [[ -d /etc/init ]] ; then
-    process_args /etc/init
-  fi
-  if [[ -d /etc/ssh ]] ; then
-    process_args /etc/ssh
-  fi
-  if [[ -d /etc/apache2 ]] ; then
-    process_args /etc/apache2
-  fi
-  if [[ -d /etc/phpmyadmin ]] ; then
-    process_args /etc/phpmyadmin
-  fi
-  if [[ -d /etc/apparmor ]] ; then
-    process_args /etc/apparmor
-  fi
-  if [[ -d /etc/network ]] ; then
-    process_args /etc/network
-  fi
-  if [[ -d /etc/mysql ]] ; then
-    process_args /etc/mysql
-  fi
-  if [[ -d /etc/postgresql ]] ; then
-    process_args /etc/postgresql
-  fi
-  if [[ -d /var/www ]] ; then
-    process_args /var/www
-  fi 
+  bfiles="/etc/shadow /etc/group /etc/passwd /etc/sudoers"
+  for has_f in $bfiles ; do
+    if [[ -f $has_f ]] ; then
+      process_args $has_f
+    fi
+  done
+  
+  bdirs="/etc/init /etc/ssh /etc/apache2 /etc/phpmyadmin /etc/apparmor /etc/network /etc/mysql /etc/postgresql /var/www "
+  for has_d in $bdirs ; do
+    if [[ -d $has_d ]] ; then
+      process_args $has_d
+    fi
+  done
+  
 fi
  
 if [[ "$1" != new ]] ; then

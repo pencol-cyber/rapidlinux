@@ -9,17 +9,18 @@
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
 m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
 m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
-
+$m_inform"Now using rapid module: [\e[33mSSH Key Hunter\e[0m]"
 
 function purge_ssh_key {
     # ... it's the only way to be sure
     
     $m_inform"Nuking \e[31m$1\e[0m from orbit"
     rm -f $1
+    echo
 }
 
 function backup_before_deleting {
-    # why you would want this, i dont know
+    # why you would want this, i dont really know
     
     if [[ -d ../backups/ ]] ; then
       sleep 1
@@ -57,11 +58,11 @@ violations=0
 users=`cat /etc/passwd | cut -f 1 -d ":"`
 
     for user in $users ; do
-	$m_inform"Checking user \e[34m$user\e[0m files in \e[35m$userhome ..."
-	userhome=`cat /etc/passwd | grep -e ^$to_disable: | cut -f 6 -d ":"`
-	
-	if [[ -r $userhome/.ssh/authorized_keys ]] ; then
-	  $m_inform"User \e[34m$user\e[0m has a v1.0 ssh keyfile in home directory \e[35m$userhome/.ssh/\e[0m"
+	userhome=`cat /etc/passwd | grep -e ^$user: | cut -f 6 -d ":"`
+	$m_inform"Checking user \e[34m$user\e[0m files in \e[35m$userhome\e[0m ..."
+
+	if [[ -e $userhome/.ssh/authorized_keys ]] ; then
+	  $m_issue"User \e[31m$user\e[0m has a v1.0 ssh keyfile in home directory \e[35m$userhome/.ssh/\e[0m"
 	  
 	  if [[ $mode == check ]] ; then
 	    let violations=$((++violations))
@@ -70,14 +71,14 @@ users=`cat /etc/passwd | cut -f 1 -d ":"`
 	    backup_before_deleting $userhome/.ssh/authorized_keys $user
 	  fi
 	  if [[ $mode == kill ]] ; then
-	    backup_before_deleting $userhome/.ssh/authorized_keys
+	    purge_ssh_key $userhome/.ssh/authorized_keys
 	  fi
 	fi
 	
-	if [[ -r $userhome/.ssh/authorized_keys2 ]] ; then
+	if [[ -e $userhome/.ssh/authorized_keys2 ]] ; then
 	  # did you know this would work too? i didn't, but hooray for manpages
 	  
-	  $m_inform"User \e[34m$user\e[0m has a v2.0 ssh keyfile in home directory \e[35m$userhome/.ssh/\e[0m"
+	  $m_issue"User \e[31m$user\e[0m has a v2.0 ssh keyfile in home directory \e[35m$userhome/.ssh/\e[0m"
 	  
 	  if [[ $mode == check ]] ; then
 	    let violations=$((++violations))
@@ -96,7 +97,7 @@ users=`cat /etc/passwd | cut -f 1 -d ":"`
     find_keys check
 
     if [[ $violations -eq 0 ]] ; then
-	$m_inform"No ssh keys found, good"
+	$m_inform"\e[32mNo ssh keys\e[0m found, good"
     else
 	$m_issue"Discovered \e[31m$violations\e[0m SSH Keys in use on this system"
 	echo
@@ -110,13 +111,15 @@ users=`cat /etc/passwd | cut -f 1 -d ":"`
 	if [[ $ssh_key_action == d ]] ; then
 	  find_keys kill
 	fi
-	
-	 cat /etc/ssh/sshd_config | grep -e "^AuthorizedKeysFile"
+    fi
+	 cat /etc/ssh/sshd_config | grep -e "^AuthorizedKeysFile" &> /dev/null
 	  if [[ "$?" -eq 0 ]] ; then
-	    $m_issue"Someone has added \e[31m`cat /etc/ssh/sshd_config | grep -e "^AuthorizedKeysFile"`\e[0m to /etc/ssh/sshd_config, you should also look into that."
+	    $m_issue"Someone has defined \e[31m`cat /etc/ssh/sshd_config | grep -e "^AuthorizedKeysFile" | tr -s`\e[0m in /etc/ssh/sshd_config"
+	    $m_issue"You want to look into this"
+	    sleep 3
 	  fi
 	  
 	if [[ "$ssh_key_action" != b && "$ssh_key_action" != d ]] ; then
-	   $m_inform" Bye! "
+	   $m_inform"Bye! "
 	fi
 	

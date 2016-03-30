@@ -65,7 +65,7 @@ echo ''
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
 m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
 m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
-
+$m_inform"Now using rapid module: [\e[32mBase\e[0m]"
 
 
 function sanity_check {
@@ -241,17 +241,6 @@ fi
       fi
     fi
 
-    if [[ "$DO_OPT_SERVICES" == yes ]] ; then
-    $m_choose"Should we try to determine what services this server runs?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
-    read -p "> " -t 60 invoke_opt_services
-      if [[ "$invoke_opt_services" == y || "$invoke_opt_services" == Y ]] ; then
-	echo
-	$SCRIPT_HOME/modules/http_service_check.sh
-	$SCRIPT_HOME/modules/sql_service_check.sh
-	$SCRIPT_HOME/modules/mail_service_check.sh
-      fi
-    fi
-
   if [[ "$DO_UPDATES" == yes ]] ; then
     # script anticipates: $1o [new| or 'name of package to update']
     $m_choose"Should we do some updates and patching now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
@@ -275,15 +264,26 @@ fi
     fi
     
    if [[ "$DO_FIREWALL" == yes ]] ; then
+   # script anticipates: $1r [new|add] $2o 'name of service to allow' $3o '.. but only from this $3 ipv4 address
     $m_choose"Should we configure the firewall now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
     read -p "> " -t 60 invoke_firewall
       if [[ "$invoke_firewall" == y || "$invoke_firewall" == Y ]] ; then
 	echo
-	$SCRIPT_HOME/modules/core_networking.sh firewall new $BOX_IPV4 $MY_IPV4
-	$SCRIPT_HOME/modules/core_networking.sh firewall add sshd $MY_IPV4
+	$SCRIPT_HOME/modules/core_networking.sh firewall new
       fi
     fi
-        
+
+    if [[ "$DO_OPT_SERVICES" == yes ]] ; then
+    $m_choose"Should we try to determine what services this server runs?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
+    read -p "> " -t 60 invoke_opt_services
+      if [[ "$invoke_opt_services" == y || "$invoke_opt_services" == Y ]] ; then
+	echo
+	$SCRIPT_HOME/modules/http_service_check.sh
+	$SCRIPT_HOME/modules/sql_service_check.sh
+	$SCRIPT_HOME/modules/mail_service_check.sh
+      fi
+    fi
+    
    if [[ "$DO_HASHING" == yes ]] ; then
     # script aticipates: 3-4 params, descibed below
     

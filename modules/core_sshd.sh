@@ -9,6 +9,7 @@
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
 m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
 m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
+$m_inform"Now using rapid module: [\e[32mCore SSHd\e[0m]"
 
 confirm_single=false
 sshd_conf=/etc/ssh/sshd_config

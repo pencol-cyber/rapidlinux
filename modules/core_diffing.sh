@@ -10,10 +10,11 @@
 #delete this next line before going live
 #SCRIPT_HOME=/home/r0tten
 
-dont_descend=false
 m_issue="echo -e \e[2m[\e[33m\e[1m!\e[0m\e[2m]\e[0m "
 m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
 m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
+$m_inform"Now using rapid module: [\e[32mCore Differential\e[0m]"
+dont_descend=false
 
 if [[ $SCRIPT_HOME_BACKUPS == "" || $SCRIPT_HOME_BACKUPS == undef ]] ; then
   backup_dir=/root/backups

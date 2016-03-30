@@ -19,7 +19,7 @@ if [[ "$#" -lt 1 ]] ; then
   $m_inform"Example -\e[32m core_accounts.sh \e[0mmodify"
   exit 1
 fi
-
+$m_inform"Now using rapid module: [\e[32mCore Accounts\e[0m]"
 
 script_mode=$1
 user_array=()
