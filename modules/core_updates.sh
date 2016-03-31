@@ -19,7 +19,7 @@ $m_inform"Now using rapid module: [\e[32mCore Updating\e[0m]"
 
 function apt_do_base {
     deb_core="bash openssh-server openssl libc-bin coreutils linuxtools apparmor"
-    deb_opt="iptraf"
+    deb_opt="iptraf wget"
     for pkg in $deb_core ; do
 	apt-get upgrade $pkg -y
     done

@@ -11,7 +11,6 @@ m_inform="echo -e \e[2m[\e[36m.\e[0m\e[2m]\e[0m "
 m_choose="echo -e \e[2m[\e[34m=\e[0m\e[2m]\e[0m "
 $m_inform"Now using rapid module: [\e[32mCore SSHd\e[0m]"
 
-confirm_single=false
 sshd_conf=/etc/ssh/sshd_config
   
 function define_allow_users {
@@ -30,21 +29,6 @@ function define_allow_users {
    fi
 }
 
-function confirm_single_allow {
-
-	# Confirm rollover to single 'AllowUsers' entry of $MY_USERNAME in sshd_config
-	
-         if [[ "$MY_USERNAME" != "" && "$MY_USERNAME" != "undef" ]] ; then
-          $m_issue"Possibly unsafe modification confirmation:"
-          $m_issue"Defining \e[32mAllowUsers $MY_USERNAME\e[0m could lock everyone out of this server if this account is not already setup for authentication"
-          echo
-	  $m_choose"Should I setup rules where ONLY \e[31m$MY_USERNAME\e[0m will be allowed to SSH into this server? \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
-	  read -p "> " -t 60 $confim_unsafe
-	    if [[ "$confim_unsafe" == y || "$confim_unsafe" == Y ]] ; then
-	      confirm_single=true
-	    fi
-	 fi
-}
 
 function confirm_changes {
 
@@ -63,6 +47,7 @@ function confirm_changes {
 	cp $sshd_conf $SCRIPT_HOME_BACKUPS/ssh/sshd.conf.orig.$ext.conf
       fi
   $m_inform"Your original SSHd config is being backed up to: \e[2m$SCRIPT_HOME_BACKUPS/ssh/sshd.conf.orig.$ext.conf\e[0m"
+  
   else
     guess_dir=echo `pwd`/..
     $m_issue"The value for \e[2m\$SCRIPT_HOME\e[0m was not passed to this script"
@@ -82,6 +67,7 @@ function confirm_changes {
   $m_inform"If this looks correct to you, let\'s use it, and also restart the SSH daemon"
   $m_choose"Proceed?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
     read -p "> " -t 60 do_it
+    
       if [[ "$do_it" == y || "$do_it" == Y ]] ; then
       cp -f $1 $sshd_conf
       sleep 1
@@ -105,17 +91,28 @@ function fix_insecure_settings {
   
   # copy original to temp
   # sed inline editing for crappy settings pre-set / unfuck them
-  
-  
+    
   ext=`date +%b_%d_%A_%H%M`
   tmp_ssh_conf=/tmp/rapidsshd.$ext.config
 
+  
+    # Confirm rollover to single 'AllowUsers' entry of $MY_USERNAME in sshd_config	
+   if [[ "$MY_USERNAME" != "" && "$MY_USERNAME" != "undef" ]] ; then
+     $m_issue"Possibly unsafe modification confirmation:"
+     $m_issue"Defining \e[32mAllowUsers $MY_USERNAME\e[0m could lock everyone out of this server if this account is not already setup for authentication"
+     echo
+     $m_choose"Should I setup rules where ONLY \e[31m$MY_USERNAME\e[0m will be allowed to SSH into this server? \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
+	read -p "> " -t 60 $confirm_unsafe
+	   if [[ "$confirm_unsafe" == y || "$confirm_unsafe" == Y ]] ; then
+	     confirm_single=true
+	   fi
+   fi
+  
   if [[ -r $sshd_conf ]] ; then
       cp $sshd_conf $tmp_ssh_conf
-      
-      
+        
 	$m_inform"Checking for \e[2mSSH v1 protocol\e[0m usage"
-	cat $tmp_ssh_conf | grep -e "^Protocol " | grep 1
+	cat $tmp_ssh_conf | grep -e "^Protocol " | grep 1  &> /dev/null
 	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^Protocol .*/Protocol 2/' $tmp_ssh_conf
 	   sshd_modified=true
@@ -126,7 +123,7 @@ function fix_insecure_settings {
 	
 	
 	$m_inform"Checking for '\e[2mEmpty Passwords\e[0m' usage"
-	cat $tmp_ssh_conf | grep -e "^PermitEmptyPasswords " | grep "yes"
+	cat $tmp_ssh_conf | grep -e "^PermitEmptyPasswords " | grep "yes"  &> /dev/null
 	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^PermitEmptyPasswords .*/PermitEmptyPasswords no/' $tmp_ssh_conf
 	   sshd_modified=true
@@ -137,7 +134,7 @@ function fix_insecure_settings {
 		
 		
 	$m_inform"Checking for '\e[2mGlobal Keyfiles\e[0m' usage"
-	cat $tmp_ssh_conf | grep -e "^AuthorizedKeysFile"
+	cat $tmp_ssh_conf | grep -e "^AuthorizedKeysFile"  &> /dev/null
 	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^AuthorizedKeysFile .*//' $tmp_ssh_conf
 	   sshd_modified=true
@@ -148,7 +145,7 @@ function fix_insecure_settings {
 	
 	
 	$m_inform"Checking for '\e[2mRemote hosts\e[0m' usage"
-	cat $tmp_ssh_conf | grep -e "^IgnoreRhosts " | grep "\ no"
+	cat $tmp_ssh_conf | grep -e "^IgnoreRhosts " | grep "\ no"  &> /dev/null
 	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^IgnoreRhosts .*/IgnoreRhosts yes/' $tmp_ssh_conf
 	   sshd_modified=true
@@ -159,7 +156,7 @@ function fix_insecure_settings {
 	
 	
 	$m_inform"Checking for '\e[2mRemote hosts RSA\e[0m' usage"
-	cat $tmp_ssh_conf | grep -e "^RhostsRSAAuthentication " | grep "yes"
+	cat $tmp_ssh_conf | grep -e "^RhostsRSAAuthentication " | grep "yes"  &> /dev/null
 	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^RhostsRSAAuthentication .*/RhostsRSAAuthentication no/' $tmp_ssh_conf
 	   sshd_modified=true
@@ -170,7 +167,7 @@ function fix_insecure_settings {
 
 	
 	$m_inform"Checking for '\e[2mX11 Forwarding\e[0m' usage"
-	cat $tmp_ssh_conf | grep -e "^X11Forwarding " | grep "yes"
+	cat $tmp_ssh_conf | grep -e "^X11Forwarding " | grep "yes" &> /dev/null
 	if [[ "$?" == 0 ]] ; then
 	   sed -i 's/^X11Forwarding .*/X11Forwarding no/' $tmp_ssh_conf
 	   sshd_modified=true
@@ -181,7 +178,7 @@ function fix_insecure_settings {
 
 	
 	$m_inform"Checking for '\e[2mPermit Root Login\e[0m' usage"
-	cat $tmp_ssh_conf | grep -e "^PermitRootLogin " | grep "yes"
+	cat $tmp_ssh_conf | grep -e "^PermitRootLogin " | grep "yes"  &> /dev/null
 	if [[ "$?" == 0 ]] ; then
 	   echo
 	   $m_inform"Disabling the ability of 'root' to login directly to SSHd is advised"
@@ -223,8 +220,11 @@ function fix_insecure_settings {
 	fi
 
     echo
+    
   if [[ $sshd_modified == true ]] ; then
+    ## Only caller for confirm_changes
     confirm_changes $tmp_ssh_conf
+    
   else
     $m_inform"No changes to your \e[34m$sshd_conf\e[0m file are required, exiting"
   fi
@@ -234,7 +234,6 @@ fi # from alllll the way at the top
 }
 
   define_allow_users
-  confirm_single_allow
   fix_insecure_settings
   
  

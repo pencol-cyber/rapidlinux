@@ -93,7 +93,7 @@ clear
   
   # essential bins needed by this script and sub-modules
   missings_deps=0
-  reqs="cut passwd chgpasswd iptables usermod wc tr chattr grep netstat chmod ifconfig tar diff adduser su sed md5sum"
+  reqs="bash cut passwd useradd chpasswd iptables ip6tables usermod wc tr chattr grep netstat chmod ifconfig tar diff adduser su sed"
   for req_binary in $reqs ; do
     which $req_binary &> /dev/null
       if [[ $? -eq 0 ]] ; then
@@ -126,8 +126,8 @@ function get_pkgmgr {
 
 if [[ -r /etc/issue ]] ; then
     $m_inform"[\e[94m/etc/issue\e[0m] exists and is readable"
-    OS_NAME=`cat /etc/issue | cut -f 1 -d " " | xargs`
-    OSVersion=`cat /etc/issue | cut -f 2 -d " " | xargs`
+    OS_NAME=`head -n 1 /etc/issue | cut -f 1 -d " " | xargs`
+    OSVersion=`head -n 1 /etc/issue | cut -f 2 -d " " | xargs`
     $m_inform"Invoking package manager determination based on found strings [\e[35m$OS_NAME\e[34m $OSVersion\e[0m]"
     
       case "$OS_NAME" in
@@ -170,12 +170,12 @@ fi
       echo
       #exit 1
         try_names="yum dpkg apt slackpkg pacman zypper urpmi netpkg emerge"
-	  for pkg_tools in $try_names ; do
+	  for pkgman_tools in $try_names ; do
 	    $m_inform"Trying to find a \e[2m$pkg_tools\e[0m on the system ..."
-	    which $pkg_tools &> /dev/null
+	    which $pkgman_tools &> /dev/null
 		if [[ $? -eq 0 ]] ; then
-		  export OS_PKG_MGR=`which pkg_tools`
-		  $m_inform"Discovered \e[34m`printf %10s $pkg_tools`\e[0m at \e[2m$OS_PKG_MGR\e[0m "
+		  export OS_PKG_MGR=`which $pkgman_tools`
+		  $m_inform"Discovered \e[34m`printf %10s $pkgman_tools`\e[0m at \e[2m$OS_PKG_MGR\e[0m "
 		fi
 	    done
 	    

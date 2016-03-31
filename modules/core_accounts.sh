@@ -127,22 +127,84 @@ function set_scoring_acct {
 
 function establish_my_acct {
 
-       additional_groups="users,sudo"
-
+       
        if [[ "$MY_USERNAME" != "" && "$MY_USERNAME" != "undef" ]] ; then
-	 $m_inform"In this section we add a user \e[31m$MY_USERNAME\e[0m to be used as a replacement for root"
-	 echo
-	 $m_inform"Creating account .."
-	 adduser $MY_USERNAME --gecos "account,created,by,rapidlinux" --disabled-password
-	 $m_inform"Populting group memberships .."
-	 usermod $MY_USERNAME -a -G $additional_groups
-	 passwd $MY_USERNAME
-	 $m_inform"Account setup completed"
-	 echo
-	 $m_inform"After you've verified that the account has sufficient priviledges, you can disable default root by invoking 'usermod -L root'"
-	 echo
-       fi
-
+	do_i_exist=false
+	
+	 for user in $users ; do
+	    if [[ $user == $MY_USERNAME ]] ; then
+	      do_i_exist=true
+	    fi
+	 done
+	 
+	  if [[ $do_i_exist == true ]] ; then
+	      $m_inform"This account already exists, nothing to do"
+	  else
+	      
+	      sysgroups=`cat /etc/group | cut -f 1 -d ":"`
+	      $m_inform"In this section we add a user \e[31m$MY_USERNAME\e[0m to be used as a replacement for root"
+	      echo
+	 	 
+	      $m_inform"Creating account .."
+	      # works great on deb+ubuntu, but fubar on red hat
+	      #adduser $MY_USERNAME --gecos "account,created,by,rapidlinux" --disabled-password
+	      useradd $MY_USERNAME --comment "created by rapidlinux" --home /home/$MY_USERNAME --create-home --shell /bin/bash
+	      
+	      $m_inform"Populting group memberships .."
+		  for grp_name in $sysgroups ; do
+		  
+		      case $grp_name in
+		      
+			root)
+			# deb no sudo / red hat
+			$m_inform"Adding $MY_USERNAME to group \e[36m$grp_name\e[0m .."
+			usermod $MY_USERNAME -a -G $grp_name
+			sleep 1
+			;;
+			sudo)
+			# ubuntu
+			$m_inform"Adding $MY_USERNAME to group \e[36m$grp_name\e[0m .."
+			usermod $MY_USERNAME -a -G $grp_name
+			sleep 1
+			;;
+			sudoers)
+			# suse
+			$m_inform"Adding $MY_USERNAME to group \e[36m$grp_name\e[0m .."
+			usermod $MY_USERNAME -a -G $grp_name
+			sleep 1
+			;;
+			admin)
+			# ubuntu
+			$m_inform"Adding $MY_USERNAME to group \e[36m$grp_name\e[0m .."
+			usermod $MY_USERNAME -a -G $grp_name
+			sleep 1
+			;;
+			adm)
+			# i really don't remember
+			$m_inform"Adding $MY_USERNAME to group \e[36m$grp_name\e[0m .."
+			usermod $MY_USERNAME -a -G $grp_name
+			sleep 1
+			;;
+			wheel)
+			# fedora cent
+			$m_inform"Adding $MY_USERNAME to group \e[36m$grp_name\e[0m .."
+			usermod $MY_USERNAME -a -G $grp_name
+			sleep 1
+			;;
+			
+			*)		
+		    esac
+		
+		done
+	      
+	      passwd $MY_USERNAME
+	      $m_inform"Account setup for \e[32m$MY_USERNAME\e[0m completed .."
+	      echo
+	      $m_inform"After you've verified that the account has sufficient priviledges, you can disable default root by invoking '\e[35musermod -L root\e[0m'"
+	      echo
+	      
+       fi # from user != created test
+  fi # from top
 }
 
 
@@ -317,29 +379,43 @@ function disable_superflous_users {
     #   2) defined personal account ($MY_USERNAME)
     #	3) white team ($SUPPORT_ACCOUNT)
     
-    disable_array=${user_array[@]}
+    disable_array="${user_array[@]}"
+    let new_count=${#disable_array[@]}
     me=`whoami`
     disable_array=( "${disable_array[@]/$me}" )
     
+    # even when all items are removed, array indexed value can never be zero
+    # so we need to switch to integer counting method
+    let new_count=$((--new_count))
+       
     if [[ "$MY_USERNAME" != "" && "$MY_USERNAME" != "undef" ]] ; then
       disable_array=( "${disable_array[@]/$MY_USERNAME}" )
+      let new_count=$((--new_count))
     fi
     
     if [[ "$SUPPORT_ACCOUNT" != "" && "$SUPPORT_ACCOUNT" != "undef" ]] ; then
       disable_array=( "${disable_array[@]/$SUPPORT_ACCOUNT}" )
+      let new_count=$((--new_count))
     fi
     
-    $m_inform"This script has identified the following accounts as possible candidates for lockout"
-    $m_inform"This also prevents SSH based logins by using enforced expiry dates"
-    for to_disable in ${disable_array[@]} ; do
-	usershell=`cat /etc/passwd | grep -e ^$to_disable: | cut -f 7 -d ":"`
-	userhome=`cat /etc/passwd | grep -e ^$to_disable: | cut -f 6 -d ":"`
-	$m_inform"User \e[34m`printf %16s $to_disable`\e[0m using shell \e[35m`printf %16s $usershell`\e[0m and home directory \e[35m$userhome\e[0m"
-    done
     
-    echo
-    $m_choose"Shall I lock them out now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
-    read -p "> " -t 60 do_lockouts
+    
+    $m_inform"Identified \e[36m$new_count\e[0m accounts as lockout candidates"
+    
+      if [[ "$new_count" -gt 0 ]] ; then
+	
+	# $m_inform"accounts: ${disable_array[@]} "
+	$m_inform"This also prevents SSH based logins by using enforced expiry dates"
+	$m_inform"This script has identified the following accounts as possible candidates for lockout "
+	  for to_disable in ${disable_array[@]} ; do
+	    usershell=`cat /etc/passwd | grep -e ^$to_disable: | cut -f 7 -d ":"`
+	    userhome=`cat /etc/passwd | grep -e ^$to_disable: | cut -f 6 -d ":"`
+	    $m_inform"User \e[34m`printf %16s $to_disable`\e[0m using shell \e[35m`printf %16s $usershell`\e[0m and home directory \e[35m$userhome\e[0m"
+	done
+    
+      echo
+      $m_choose"Shall I lock them out now?  \e[2m[\e[32m\e[1my\e[0m\e[2m|\e[31m\e[1mn\e[0m\e[2m] \e[0m"
+      read -p "> " -t 60 do_lockouts
     	  if [[ "$do_lockouts" == y || "$do_lockouts" == Y ]] ; then
 	     for to_disable in ${disable_array[@]} ; do
 		  $m_inform"Setting \e[32m$to_disable\e[0m account as expired + locked out"
@@ -347,8 +423,12 @@ function disable_superflous_users {
 	     done
 	   $m_inform"\e[36m${#disable_array[@]}\e[0m accounts were locked out"
 	   echo
+	  else
+	   $m_inform"User declined to use lockouts, no accounts were locked out"
 	  fi
-	  
+    else
+      $m_inform"function returned \e[36m$new_count\e[0m accounts, so there were no lockout candidates"
+    fi # from array > 1 check
 }
     
     
