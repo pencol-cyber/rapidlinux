@@ -380,25 +380,24 @@ function disable_superflous_users {
     #	3) white team ($SUPPORT_ACCOUNT)
     
     disable_array="${user_array[@]}"
-    let new_count=${#disable_array[@]}
+    
     me=`whoami`
     disable_array=( "${disable_array[@]/$me}" )
-    
-    # even when all items are removed, array indexed value can never be zero
-    # so we need to switch to integer counting method
-    let new_count=$((--new_count))
        
     if [[ "$MY_USERNAME" != "" && "$MY_USERNAME" != "undef" ]] ; then
       disable_array=( "${disable_array[@]/$MY_USERNAME}" )
-      let new_count=$((--new_count))
+      
     fi
     
     if [[ "$SUPPORT_ACCOUNT" != "" && "$SUPPORT_ACCOUNT" != "undef" ]] ; then
       disable_array=( "${disable_array[@]/$SUPPORT_ACCOUNT}" )
-      let new_count=$((--new_count))
     fi
     
+    # even when all items are removed, array indexed value can never be zero
+    # so we need to switch to integer counting method
     
+    let new_count=${#disable_array[@]}
+    let new_count=$((--new_count))
     
     $m_inform"Identified \e[36m$new_count\e[0m accounts as lockout candidates"
     
@@ -427,7 +426,7 @@ function disable_superflous_users {
 	   $m_inform"User declined to use lockouts, no accounts were locked out"
 	  fi
     else
-      $m_inform"function returned \e[36m$new_count\e[0m accounts, so there were no lockout candidates"
+      $m_inform"there were no lockout candidates, continuing"
     fi # from array > 1 check
 }
     

@@ -1,5 +1,6 @@
 3425ebee498c24e08867dba5863a8646  base.sh
-fa8da6b3a3169e6830076d0e3b608905  modules/core_accounts.sh
+a853342492d6579bc2449a20ea539445  rapidlinux.tar.gz
+1fe42df50b10a7f10dbca97409310eca  modules/core_accounts.sh
 3c986427e43df7e5821cb81472fb9e87  modules/core_backups.sh
 c61e154ad71641f40aa443794a740986  modules/core_diffing.sh
 da4be62e327d79ee00f51d8915decbc5  modules/core_networking.sh
